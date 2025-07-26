@@ -92,8 +92,14 @@ local menu_entries = {
      {
         id = "audio_field",
         group = note_settings,
-        name = "Forvo Audio Field",
-        description = "Anki field to store Forvo audio in.",
+        name = "Audio Field",
+        description = "Anki field to store pronunciation audio in.",
+    },
+     {
+        id = "audio_source",
+        group = note_settings,
+        name = "Audio Source",
+        description = "Choose audio source: cambridge (Cambridge Dictionary), forvo (Forvo), or multi (try Cambridge first, fallback to Forvo).",
     },
      {
         id = "img_field",
