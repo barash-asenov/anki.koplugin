@@ -13,6 +13,7 @@ local NetworkMgr = require("ui/network/manager")
 local DataStorage = require("datastorage")
 local Translator = require("ui/translator")
 local forvo = require("forvo")
+local cambridge = require("cambridge")
 local u = require("lua_utils/utils")
 local conf = require("anki_configuration")
 
@@ -34,9 +35,9 @@ function AnkiConnect:get_url()
     local valid_url = url
     local _, scheme_end_idx, scheme, ssl = url:find("^(http(s?)://)")
     if not scheme then
-        valid_url = 'http://'..url
+        valid_url = 'http://' .. url
     elseif ssl then
-        valid_url = 'http://'..url:sub(scheme_end_idx+1, #url)
+        valid_url = 'http://' .. url:sub(scheme_end_idx + 1, #url)
     end
     self.last_url = url
     self.valid_url = valid_url
@@ -77,7 +78,8 @@ function AnkiConnect:post_requestpermission()
         source = ltn12.source.string(json_payload),
     }
     local code, headers, status = socket.skip(1, http.request(request))
-    logger.dbg(string.format("AnkiConnect#post_requestpermission: code: %s, header: %s, status: %s\n", code, headers, status))
+    logger.dbg(string.format("AnkiConnect#post_requestpermission: code: %s, header: %s, status: %s\n", code, headers,
+        status))
     local result = table.concat(output_sink)
     logger.dbg("AnkiConnect#post_requestpermission: result: ", result)
     return result, code, self:get_requestpermission_error(code, result)
@@ -99,7 +101,8 @@ function AnkiConnect:get_requestpermission_error(http_return_code, request_data)
 end
 
 function AnkiConnect:post_request(note)
-    local anki_connect_request = { action = "addNote", params = { note = note }, version = 6, key = conf.api_key:get_value() }
+    local anki_connect_request = { action = "addNote", params = { note = note }, version = 6, key = conf.api_key
+    :get_value() }
     local json_payload = json.encode(anki_connect_request)
     logger.dbg("AnkiConnect#post_request: building POST request with payload: ", json_payload)
     local output_sink = {} -- contains data returned by request
@@ -155,11 +158,57 @@ function AnkiConnect:set_forvo_audio(field, word, language)
     } or nil
 end
 
+function AnkiConnect:set_cambridge_audio(field, word, language)
+    logger.info(("Querying Cambridge audio for '%s' in language: %s"):format(word, language))
+    local ok, cambridge_url = cambridge.get_pronunciation_url(word, language)
+    if not ok then
+        if cambridge_url == "CAMBRIDGE_403" then
+            -- For 403 errors, return true but no audio data
+            logger.warn("Cambridge returned 403 error - continuing without audio")
+            return true, nil
+        end
+        return false, ("Could not connect to Cambridge Dictionary: %s"):format(cambridge_url)
+    end
+    return true, cambridge_url and {
+        url = cambridge_url,
+        filename = string.format("cambridge_%s.mp3", word),
+        fields = { field }
+    } or nil
+end
+
+function AnkiConnect:set_multi_source_audio(field, word, language)
+    logger.info(("Querying multiple audio sources for '%s' in language: %s"):format(word, language))
+    
+    -- Try Cambridge first, then fall back to Forvo
+    local ok, cambridge_url = cambridge.get_pronunciation_url(word, language)
+    if ok and cambridge_url then
+        return true, {
+            url = cambridge_url,
+            filename = string.format("cambridge_%s.mp3", word),
+            fields = { field }
+        }
+    end
+    
+    -- Fall back to Forvo if Cambridge fails
+    local forvo_ok, forvo_url = forvo.get_pronunciation_url(word, language)
+    if forvo_ok and forvo_url then
+        return true, {
+            url = forvo_url,
+            filename = string.format("forvo_%s.ogg", word),
+            fields = { field }
+        }
+    end
+    
+    -- Return true but no audio data if both fail
+    logger.warn("Both Cambridge and Forvo failed to provide audio")
+    return true, nil
+end
+
 function AnkiConnect:set_image_data(field, img_path)
     if not img_path then
         return true
     end
-    local _,filename = util.splitFilePathName(img_path)
+    local _, filename = util.splitFilePathName(img_path)
     local img_f = io.open(img_path, 'rb')
     if not img_f then
         return true
@@ -185,7 +234,8 @@ function AnkiConnect:handle_callbacks(note, on_err_func)
             if param == "fields" then
                 note.data.fields[mod.field_name] = result_or_err
             else
-                assert(note.data[param] == nil, ("unexpected result: note property '%s' was already present!"):format(param))
+                assert(note.data[param] == nil,
+                    ("unexpected result: note property '%s' was already present!"):format(param))
                 note.data[param] = result_or_err
             end
             field_callbacks[param] = nil
@@ -205,7 +255,7 @@ function AnkiConnect:sync_offline_notes()
     end
 
     local synced, failed, errs = {}, {}, u.defaultdict(0)
-    for _,note in ipairs(self.local_notes) do
+    for _, note in ipairs(self.local_notes) do
         local sync_ok = self:handle_callbacks(note, function(callback_err)
             errs[callback_err] = errs[callback_err] + 1
         end)
@@ -220,7 +270,7 @@ function AnkiConnect:sync_offline_notes()
     end
     self.local_notes = failed
     local failed_as_json = {}
-    for _,note in ipairs(failed) do
+    for _, note in ipairs(failed) do
         table.insert(failed_as_json, json.encode(note))
     end
     -- called even when there's no failed notes, this way it also gets rid of the notes which we managed to sync, no need to keep those around
@@ -277,7 +327,8 @@ function AnkiConnect:delete_latest_note()
         end
         -- don't use rapidjson, the anki note ids are 64bit integers, they are turned into different numbers by the json library
         -- presumably because 32 vs 64 bit architecture
-        local delete_request = ([[{"action": "deleteNotes", "version": 6, "params": {"notes": [%d]} }]]):format(latest.id)
+        local delete_request = ([[{"action": "deleteNotes", "version": 6, "params": {"notes": [%d]} }]]):format(latest
+        .id)
         local _, err = self:post_request(delete_request)
         if err then
             return self:show_popup(("Couldn't delete note: %s!"):format(err), 3, true)
@@ -377,7 +428,7 @@ function AnkiConnect:new(opts)
     self.local_notes = {}
     -- path of notes stored locally when WiFi isn't available
     self.notes_filename = self.settings_dir .. "/anki.koplugin_notes.json"
-    return setmetatable({} , { __index = self })
+    return setmetatable({}, { __index = self })
 end
 
 return AnkiConnect

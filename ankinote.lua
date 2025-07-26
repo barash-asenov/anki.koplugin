@@ -204,7 +204,7 @@ function AnkiNote:build()
         -- all info needed to populate them is stored as a callback, which is called when a connection is available
         field_callbacks = {
             audio = {
-                func = "set_forvo_audio",
+                func = self:get_audio_function(),
                 field_name = conf.audio_field:get_value(),
                 args = { self.popup_dict.word, self:get_language() }
             },
@@ -222,6 +222,17 @@ function AnkiNote:build()
         -- used as id to detect duplicates when storing notes offline
         identifier = conf.word_field:get_value()
     }
+end
+
+function AnkiNote:get_audio_function()
+    local audio_source = conf.audio_source:get_value()
+    if audio_source == "cambridge" then
+        return "set_cambridge_audio"
+    elseif audio_source == "forvo" then
+        return "set_forvo_audio"
+    else -- default to "multi" for multi-source
+        return "set_multi_source_audio"
+    end
 end
 
 function AnkiNote:get_language()
