@@ -180,7 +180,7 @@ function AnkiConnect:set_cambridge_audio(field, word, language)
     return true,
         cambridge_url and {
             url = cambridge_url,
-            filename = string.format("cambridge_%s.mp3", word),
+            filename = string.format("cambridge_%s.ogg", word),
             fields = { field },
         } or nil
 end
@@ -204,12 +204,7 @@ function AnkiConnect:set_primary_fallback_audio(field, word, language)
         return true,
             {
                 url = primary_url,
-                filename = string.format(
-                    "%s_%s%s",
-                    primary_audio_source,
-                    word,
-                    primary_audio_source == "cambridge" and ".mp3" or ".ogg"
-                ),
+                filename = string.format("%s_%s.ogg", primary_audio_source, word),
                 fields = { field },
             }
     end
@@ -221,12 +216,7 @@ function AnkiConnect:set_primary_fallback_audio(field, word, language)
             return true,
                 {
                     url = fallback_url,
-                    filename = string.format(
-                        "%s_%s%s",
-                        fallback_audio_source,
-                        word,
-                        fallback_audio_source == "cambridge" and ".mp3" or ".ogg"
-                    ),
+                    filename = string.format("%s_%s.ogg", fallback_audio_source, word),
                     fields = { field },
                 }
         end
