@@ -96,10 +96,16 @@ local menu_entries = {
         description = "Anki field to store pronunciation audio in.",
     },
      {
-        id = "audio_source",
+        id = "primary_audio_source",
         group = note_settings,
-        name = "Audio Source",
-        description = "Choose audio source: cambridge (Cambridge Dictionary), forvo (Forvo), or multi (try Cambridge first, fallback to Forvo).",
+        name = "Primary Audio Source",
+        description = "Primary audio source: cambridge (Cambridge Dictionary) or forvo (Forvo).",
+    },
+     {
+        id = "fallback_audio_source",
+        group = note_settings,
+        name = "Fallback Audio Source",
+        description = "Fallback audio source when primary fails. Leave empty for no fallback.",
     },
      {
         id = "img_field",

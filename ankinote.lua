@@ -3,9 +3,9 @@ local util = require("util")
 local u = require("lua_utils/utils")
 local conf = require("anki_configuration")
 
-local LANG_NOT_SET_ERROR = "Neither the dictionary, nor the document have its language set. See the FAQ section in the plugin's README."
-local AnkiNote = {
-}
+local LANG_NOT_SET_ERROR =
+    "Neither the dictionary, nor the document have its language set. See the FAQ section in the plugin's README."
+local AnkiNote = {}
 
 --[[
 -- Determine trimmed word context for consecutive lookups.
@@ -25,16 +25,15 @@ function AnkiNote:set_word_trim()
     if not s_idx then
         self.contextual_lookup = false
     else
-        self.word_trim = { before = orig:sub(1, s_idx-1), after = orig:sub(e_idx+1, #orig) }
+        self.word_trim = { before = orig:sub(1, s_idx - 1), after = orig:sub(e_idx + 1, #orig) }
     end
 end
 
-
 function AnkiNote:convert_to_HTML(opts)
-    local wrapper_template = opts.wrapper_template or "<div class=\"%s\"><ol>%s</ol></div>"
-    local entry_template = opts.entry_template or "<li dict=\"%s\">%s</li>"
+    local wrapper_template = opts.wrapper_template or '<div class="%s"><ol>%s</ol></div>'
+    local entry_template = opts.entry_template or '<li dict="%s">%s</li>'
     local list_items = {}
-    for _,entry in ipairs(opts.entries) do
+    for _, entry in ipairs(opts.entries) do
         table.insert(list_items, opts.build(entry, entry_template))
     end
     return wrapper_template:format(opts.class, table.concat(list_items))
@@ -57,7 +56,7 @@ function AnkiNote:get_word_context()
         local before, after = self:get_custom_context(unpack(self.context))
         return before .. "<b>" .. self.popup_dict.word .. "</b>" .. after
     elseif provider == "mupdf" then -- CBZ
-        local ocr_text = self.ui['Mokuro'] and self.ui['Mokuro']:get_selection()
+        local ocr_text = self.ui["Mokuro"] and self.ui["Mokuro"]:get_selection()
         logger.info("selected text: ", ocr_text)
         -- TODO is trim relevant here?
         return ocr_text or self.popup_dict.word
@@ -82,8 +81,8 @@ function AnkiNote:get_custom_context(pre_s, pre_c, post_s, post_c)
     -- apparently the mupdf provider does not add the trailing/leading spaces, so we have to do it ourselves
     local function add_spacing(context, idx)
         local context_table = { context }
-        if self.ui.document.provider == 'mupdf' and #context > 0 then
-            table.insert(context_table, idx or #context_table + 1, ' ')
+        if self.ui.document.provider == "mupdf" and #context > 0 then
+            table.insert(context_table, idx or #context_table + 1, " ")
         end
         return table.concat(context_table, "")
     end
@@ -92,12 +91,22 @@ function AnkiNote:get_custom_context(pre_s, pre_c, post_s, post_c)
     -- calculate the slice of the `prev_context_table` array that should be prepended to the lookupword
     local prev_idx, prev_s_idx = 0, 0
     while prev_s_idx < pre_s do
-        if #self.prev_context_table <= prev_idx then expand_content() end
+        if #self.prev_context_table <= prev_idx then
+            expand_content()
+        end
         -- if we're still out of bounds after expanding content we're at the beginning of the doc
-        if #self.prev_context_table <= prev_idx then break end
+        if #self.prev_context_table <= prev_idx then
+            break
+        end
         local idx = #self.prev_context_table - prev_idx
         local ch = self.prev_context_table[idx]
-        assert(ch ~= nil, ("Something went wrong when parsing previous context! idx: %d, context_table size: %d"):format(idx, #self.prev_context_table))
+        assert(
+            ch ~= nil,
+            ("Something went wrong when parsing previous context! idx: %d, context_table size: %d"):format(
+                idx,
+                #self.prev_context_table
+            )
+        )
         if delims_map[ch] then
             prev_s_idx = prev_s_idx + 1
         end
@@ -108,7 +117,9 @@ function AnkiNote:get_custom_context(pre_s, pre_c, post_s, post_c)
         prev_idx = prev_idx - 1
     end
     prev_idx = prev_idx + pre_c
-    if #self.prev_context_table <= prev_idx then expand_content() end
+    if #self.prev_context_table <= prev_idx then
+        expand_content()
+    end
     local i, j = #self.prev_context_table - prev_idx + 1, #self.prev_context_table
     local prepended_content = add_spacing(table.concat(self.prev_context_table, "", i, j))
 
@@ -116,11 +127,21 @@ function AnkiNote:get_custom_context(pre_s, pre_c, post_s, post_c)
     -- `next_idx` starts at 1 because that's the first index in the table
     local next_idx, next_s_idx = 1, 0
     while next_s_idx < post_s do
-        if next_idx > #self.next_context_table then expand_content() end
+        if next_idx > #self.next_context_table then
+            expand_content()
+        end
         -- if we're still out of bounds after expanding content we're at the end of the doc
-        if next_idx > #self.next_context_table then break end
+        if next_idx > #self.next_context_table then
+            break
+        end
         local ch = self.next_context_table[next_idx]
-        assert(ch ~= nil, ("Something went wrong when parsing next context! idx: %d, context_table size: %d"):format(next_idx, #self.next_context_table))
+        assert(
+            ch ~= nil,
+            ("Something went wrong when parsing next context! idx: %d, context_table size: %d"):format(
+                next_idx,
+                #self.next_context_table
+            )
+        )
         if delims_map[ch] then
             next_s_idx = next_s_idx + 1
         end
@@ -129,7 +150,9 @@ function AnkiNote:get_custom_context(pre_s, pre_c, post_s, post_c)
     -- do not include the trailing character
     next_idx = next_idx - 1
     next_idx = next_idx + post_c
-    if next_idx > #self.next_context_table then expand_content() end
+    if next_idx > #self.next_context_table then
+        expand_content()
+    end
     local appended_content = add_spacing(table.concat(self.next_context_table, "", 1, next_idx), 1)
     -- These 2 variables can be used to detect if any content was prepended / appended
     self.has_prepended_content = prev_idx > 0
@@ -142,7 +165,7 @@ function AnkiNote:get_picture_context()
     if not meta then
         return
     end
-    local provider, plugin = self.ui.document.provider, self.ui['Mokuro']
+    local provider, plugin = self.ui.document.provider, self.ui["Mokuro"]
     -- we only add pictures for CBZ (handled by ocr_popup widget)
     if provider == "mupdf" and plugin then
         local fn = string.format("%s/%s_%s.jpg", self.settings_dir, meta.title, os.date("%Y-%m-%d %H-%M-%S"))
@@ -158,30 +181,34 @@ function AnkiNote:run_extensions(note)
 end
 
 function AnkiNote:get_definition()
-    return self:convert_to_HTML {
+    return self:convert_to_HTML({
         entries = { self.popup_dict.results[self.popup_dict.dict_index] },
         class = "definition",
         build = function(entry, entry_template)
             local def = entry.definition
             if entry.is_html then -- try adding dict name to opening div tag (if present)
                 -- gsub wrapped in () so it only gives us the first result, and discards the index (2nd arg.)
-                return (def:gsub("(<div)( ?)", string.format("%%1 dict=\"%s\"%%2", entry.dict), 1))
+                return (def:gsub("(<div)( ?)", string.format('%%1 dict="%s"%%2', entry.dict), 1))
             end
             return entry_template:format(entry.dict, (def:gsub("\n", "<br>")))
-        end
-    }
+        end,
+    })
 end
 
 function AnkiNote:build()
     local fields = {
         [conf.word_field:get_value()] = self.popup_dict.word,
-        [conf.def_field:get_value()] = self:get_definition()
+        [conf.def_field:get_value()] = self:get_definition(),
     }
     local optional_fields = {
-        [conf.context_field] = function() return self:get_word_context() end,
-        [conf.meta_field]    = function() return self:get_metadata() end,
+        [conf.context_field] = function()
+            return self:get_word_context()
+        end,
+        [conf.meta_field] = function()
+            return self:get_metadata()
+        end,
     }
-    for opt,fn in pairs(optional_fields) do
+    for opt, fn in pairs(optional_fields) do
         local field_name = opt:get_value()
         if field_name then
             fields[field_name] = fn()
@@ -206,38 +233,46 @@ function AnkiNote:build()
             audio = {
                 func = self:get_audio_function(),
                 field_name = conf.audio_field:get_value(),
-                args = { self.popup_dict.word, self:get_language() }
+                args = { self.popup_dict.word, self:get_language() },
             },
             picture = {
                 func = "set_image_data",
                 field_name = conf.image_field:get_value(),
-                args = { self:get_picture_context() }
+                args = { self:get_picture_context() },
             },
             fields = {
                 func = "set_translated_context",
                 field_name = conf.translated_context_field:get_value(),
-                args = { fields[conf.context_field:get_value()] or self:get_word_context(), self:get_language() }
+                args = { fields[conf.context_field:get_value()] or self:get_word_context(), self:get_language() },
             },
         },
         -- used as id to detect duplicates when storing notes offline
-        identifier = conf.word_field:get_value()
+        identifier = conf.word_field:get_value(),
     }
 end
 
 function AnkiNote:get_audio_function()
-    local audio_source = conf.audio_source:get_value()
-    if audio_source == "cambridge" then
-        return "set_cambridge_audio"
-    elseif audio_source == "forvo" then
-        return "set_forvo_audio"
-    else -- default to "multi" for multi-source
-        return "set_multi_source_audio"
+    local primary_audio_source = conf.primary_audio_source:get_value()
+    local fallback_audio_source = conf.fallback_audio_source:get_value()
+
+    -- If fallback is empty, use single source
+    if fallback_audio_source == "" then
+        if primary_audio_source == "cambridge" then
+            return "set_cambridge_audio"
+        elseif primary_audio_source == "forvo" then
+            return "set_forvo_audio"
+        else
+            return "set_forvo_audio" -- default fallback
+        end
+    else
+        -- Use primary/fallback pattern
+        return "set_primary_fallback_audio"
     end
 end
 
 function AnkiNote:get_language()
     local ifo_lang = self.selected_dict.ifo_lang
-    local language = ifo_lang and ifo_lang.lang_in or rawget(self.ui.document._anki_metadata, 'language')
+    local language = ifo_lang and ifo_lang.lang_in or rawget(self.ui.document._anki_metadata, "language")
     if not language then
         local selected_dict_name = self.popup_dict.results[self.popup_dict.dict_index].dict
         local document_title = rawget(self.ui.document._anki_metadata, "title")
@@ -249,22 +284,33 @@ end
 function AnkiNote:init_context_buffer(size)
     logger.info(("(re)initializing context buffer with size: %d"):format(size))
     if self.prev_context_table and self.next_context_table then
-        logger.info(("before reinit: prev table = %d, next table = %d"):format(#self.prev_context_table, #self.next_context_table))
+        logger.info(
+            ("before reinit: prev table = %d, next table = %d"):format(
+                #self.prev_context_table,
+                #self.next_context_table
+            )
+        )
     end
-    local skipped_chars = u.to_set(util.splitToChars(("\n\r")))
+    local skipped_chars = u.to_set(util.splitToChars("\n\r"))
     local prev_c, next_c = self.ui.highlight:getSelectedWordContext(size)
     -- pass trimmed word context along to be modified
     prev_c = prev_c .. self.word_trim.before
     next_c = self.word_trim.after .. next_c
     self.prev_context_table = {}
     for _, ch in ipairs(util.splitToChars(prev_c)) do
-        if not skipped_chars[ch] then table.insert(self.prev_context_table, ch) end
+        if not skipped_chars[ch] then
+            table.insert(self.prev_context_table, ch)
+        end
     end
     self.next_context_table = {}
     for _, ch in ipairs(util.splitToChars(next_c)) do
-        if not skipped_chars[ch] then table.insert(self.next_context_table, ch) end
+        if not skipped_chars[ch] then
+            table.insert(self.next_context_table, ch)
+        end
     end
-    logger.info(("after reinit: prev table = %d, next table = %d"):format(#self.prev_context_table, #self.next_context_table))
+    logger.info(
+        ("after reinit: prev table = %d, next table = %d"):format(#self.prev_context_table, #self.next_context_table)
+    )
 end
 
 function AnkiNote:set_custom_context(pre_s, pre_c, post_s, post_c)
@@ -272,7 +318,7 @@ function AnkiNote:set_custom_context(pre_s, pre_c, post_s, post_c)
 end
 
 function AnkiNote:add_tags(tags)
-    for _,t in ipairs(tags) do
+    for _, t in ipairs(tags) do
         table.insert(self.tags, t)
     end
 end
@@ -284,7 +330,14 @@ function AnkiNote:load_extensions()
     for _, ext_filename in ipairs(self.ext_modules) do
         if extension_set[ext_filename] then
             local module = self.ext_modules[ext_filename]
-            table.insert(self.extensions, setmetatable(module, { __index = function(t, v) return rawget(t, v) or self[v] end }))
+            table.insert(
+                self.extensions,
+                setmetatable(module, {
+                    __index = function(t, v)
+                        return rawget(t, v) or self[v]
+                    end,
+                })
+            )
         end
     end
 end
@@ -322,7 +375,12 @@ function AnkiNote:new(popup_dict)
     -- TODO this can be delayed
     if note.contextual_lookup then
         note:init_context_buffer(note.context_size)
-        note:set_custom_context(tonumber(conf.prev_sentence_count:get_value()), 0, tonumber(conf.next_sentence_count:get_value()), 0)
+        note:set_custom_context(
+            tonumber(conf.prev_sentence_count:get_value()),
+            0,
+            tonumber(conf.next_sentence_count:get_value()),
+            0
+        )
     end
     return note
 end

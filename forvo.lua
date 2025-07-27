@@ -9,6 +9,7 @@ local http = require("socket.http")
 local socket = require("socket")
 local ltn12 = require("ltn12")
 local socketutil = require("socketutil")
+local utils = require("lua_utils/utils")
 
 
 local function GET(url)
@@ -68,22 +69,9 @@ local function base64d(data)
 end
 
 
-local function url_encode(url)
-    -- https://gist.github.com/liukun/f9ce7d6d14fa45fe9b924a3eed5c3d99
-    local char_to_hex = function(c)
-        return string.format("%%%02X", string.byte(c))
-    end
-    if url == nil then
-        return
-    end
-    url = url:gsub("\n", "\r\n")
-    url = url:gsub("([^%w _%%%-%.~])", char_to_hex)
-    url = url:gsub(" ", "+")
-    return url
-end
 
 local function get_pronunciation_url(word, language)
-    local forvo_url = ('https://forvo.com/search/%s/%s'):format(url_encode(word), language)
+    local forvo_url = ('https://forvo.com/search/%s/%s'):format(utils.url_encode(word), language)
     local forvo_page, err = GET(forvo_url)
     if not forvo_page then
         return false, err

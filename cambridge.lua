@@ -9,6 +9,7 @@ local http = require("socket.http")
 local socket = require("socket")
 local ltn12 = require("ltn12")
 local socketutil = require("socketutil")
+local utils = require("lua_utils/utils")
 
 local function GET(url)
     local sink = {}
@@ -17,8 +18,7 @@ local function GET(url)
         url = url,
         method = "GET",
         headers = {
-            ["User-Agent"] =
-            "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36",
+            ["User-Agent"] = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36",
             ["Host"] = "dictionary.cambridge.org",
             ["Accept-Language"] = "en-US,en;q=0.9",
             ["Accept"] = "*/*",
@@ -36,22 +36,8 @@ local function GET(url)
     return false, ("[%d]: %s"):format(code or -1, status or "")
 end
 
-local function url_encode(url)
-    -- https://gist.github.com/liukun/f9ce7d6d14fa45fe9b924a3eed5c3d99
-    local char_to_hex = function(c)
-        return string.format("%%%02X", string.byte(c))
-    end
-    if url == nil then
-        return
-    end
-    url = url:gsub("\n", "\r\n")
-    url = url:gsub("([^%w _%%%-%.~])", char_to_hex)
-    url = url:gsub(" ", "+")
-    return url
-end
-
 local function get_pronunciation_url(word, language)
-    local cambridge_url = ("https://dictionary.cambridge.org/dictionary/english/%s"):format(url_encode(word))
+    local cambridge_url = ("https://dictionary.cambridge.org/dictionary/english/%s"):format(utils.url_encode(word))
     local cambridge_page, err = GET(cambridge_url)
     if not cambridge_page then
         return false, err
@@ -92,4 +78,3 @@ end
 return {
     get_pronunciation_url = get_pronunciation_url,
 }
-
