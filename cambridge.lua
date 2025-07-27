@@ -43,20 +43,20 @@ local function get_pronunciation_url(word, language)
         return false, err
     end
 
-    -- Look for UK pronunciation audio (mp3 format)
-    local uk_audio_pattern = 'data%-src%-mp3="([^"]*uk_pron[^"]*%.mp3)"'
+    -- Look for UK pronunciation audio (ogg format)
+    local uk_audio_pattern = 'data%-src%-ogg="([^"]*uk_pron[^"]*%.ogg)"'
     local uk_audio_url = string.match(cambridge_page, uk_audio_pattern)
 
-    -- Look for US pronunciation audio (mp3 format) if UK not found
-    local us_audio_pattern = 'data%-src%-mp3="([^"]*us_pron[^"]*%.mp3)"'
+    -- Look for US pronunciation audio (ogg format) if UK not found
+    local us_audio_pattern = 'data%-src%-ogg="([^"]*us_pron[^"]*%.ogg)"'
     local us_audio_url = string.match(cambridge_page, us_audio_pattern)
 
     -- Also try alternative patterns without data- prefix
     if not uk_audio_url then
-        uk_audio_url = string.match(cambridge_page, 'src="([^"]*uk_pron[^"]*%.mp3)"')
+        uk_audio_url = string.match(cambridge_page, 'src="([^"]*uk_pron[^"]*%.ogg)"')
     end
     if not us_audio_url then
-        us_audio_url = string.match(cambridge_page, 'src="([^"]*us_pron[^"]*%.mp3)"')
+        us_audio_url = string.match(cambridge_page, 'src="([^"]*us_pron[^"]*%.ogg)"')
     end
 
     -- Prefer UK pronunciation, fall back to US
