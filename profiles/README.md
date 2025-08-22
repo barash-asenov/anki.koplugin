@@ -69,6 +69,12 @@ local Config = {
     -- The field name where the audio will be sent to.
     audio_field = "VocabAudio",
 
+    -- Primary audio source (try this first)
+    primary_audio_source = "forvo",
+
+    -- Fallback audio source (try this if primary fails)
+    fallback_audio_source = "cambridge",
+
     -- list of extensions which should be enabled, by default they are all off
     -- an extension is turned on by listing its filename in the table below
     -- existing extensions are listed below, remove the leading -- to enable them
