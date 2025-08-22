@@ -19,6 +19,14 @@ function AnkiNote:set_word_trim()
     if #list == 1 then
         return
     end
+
+    -- When preserve_initial_context is enabled, store the original word for context but allow lookup word to change
+    if conf.preserve_initial_context:get_value() then
+        self.original_context_word = list[1].word
+        -- Don't modify word_trim, keep it as empty defaults to preserve original context
+        return
+    end
+
     local orig, last = list[1].word, list[#list].word
     logger.dbg(("first popup dict: %s, last dict : %s"):format(orig, last))
     local s_idx, e_idx = orig:find(last, 1, true)
@@ -54,7 +62,10 @@ function AnkiNote:get_word_context()
     local provider = self.ui.document.provider
     if self.ui.document.getSelectedWordContext then
         local before, after = self:get_custom_context(unpack(self.context))
-        return before .. "<b>" .. self.popup_dict.word .. "</b>" .. after
+        -- Use original context word when preserve_initial_context is enabled, otherwise use current lookup word
+        local context_word = (conf.preserve_initial_context:get_value() and self.original_context_word)
+            or self.popup_dict.word
+        return before .. "<b>" .. context_word .. "</b>" .. after
     elseif provider == "mupdf" then -- CBZ
         local ocr_text = self.ui["Mokuro"] and self.ui["Mokuro"]:get_selection()
         logger.info("selected text: ", ocr_text)
@@ -362,6 +373,7 @@ function AnkiNote:new(popup_dict)
         -- this can still be set to false later when the user looks up a word in a book, but then modifies the looked up word
         contextual_lookup = self.ui.highlight.selected_text ~= nil,
         word_trim = { before = "", after = "" },
+        original_context_word = nil, -- stores the originally selected word for context preservation
         tags = { "KOReader" },
     }
     local new_mt = {}

@@ -54,6 +54,10 @@ local Config = {
     -- Amount of sentences which are appended to the word looked up. Set this to 1 to complete the current sentence.
     next_sentence_count = 1,
 
+    -- When doing nested lookups, preserve the initial context instead of adjusting based on subsequent lookups
+    -- This is useful for language learning when looking up conjugated verbs where you want to keep the original sentence context
+    preserve_initial_context = true,
+
     -- [REQUIRED] The field name where the dictionary definition will be sent to.
     def_field = "VocabDef",
 

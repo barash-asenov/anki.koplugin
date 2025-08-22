@@ -133,6 +133,13 @@ local menu_entries = {
         name = "Next Sentence Count",
         description = "Amount of sentences to append to the word looked up.",
     },
+    {
+        id = "preserve_initial_context",
+        group = general_settings,
+        name = "Preserve Initial Context",
+        description = "When doing nested lookups, always use the word and context from the first lookup instead of adjusting based on subsequent lookups.",
+        conf_type = "bool",
+    },
     --[[ TODO: we may wanna move this to the extension and insert it back in the menu somehow
      {
         id = "dict_field_map",

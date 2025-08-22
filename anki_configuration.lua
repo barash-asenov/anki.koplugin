@@ -123,6 +123,7 @@ local Configuration = {
     Setting:new({ id = "translated_context_field" }),
     Setting:new({ id = "prev_sentence_count", default = "1" }),
     Setting:new({ id = "next_sentence_count", default = "1" }),
+    Setting:new({ id = "preserve_initial_context", default = false }),
 }
 for _, s in ipairs(Configuration) do
     Configuration[s.id] = s
